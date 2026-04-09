@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 算命问答小助手</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a1614;
+      --card: #252019;
+      --border: #3d3429;
+      --text: #e8e0d5;
+      --muted: #9a8f82;
+      --accent: #c9a227;
+      --accent-soft: #b8921f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Serif SC', serif;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      flex-shrink: 0;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card);
+    }
+    .header h1 {
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+      font-size: 1.25rem;
+      color: var(--accent);
+      margin: 0;
+    }
+    .btn-icon {
+      padding: 0.5rem 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-icon:hover { color: var(--accent); border-color: var(--accent); }
+    .chat-area {
+      flex: 1;
+      overflow: auto;
+      padding: 1rem;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .msg {
+      margin-bottom: 1rem;
+      max-width: 90%;
+    }
+    .msg.user { margin-left: auto; }
+    .msg .bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user .bubble {
+      background: var(--accent-soft);
+      color: #1a1614;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.assistant .bubble {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
+    .msg .role {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .input-area {
+      flex-shrink: 0;
+      padding: 1rem;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .input-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    .input-row textarea {
+      flex: 1;
+      min-height: 48px;
+      max-height: 160px;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      resize: none;
+    }
+    .input-row textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .input-row textarea::placeholder { color: var(--muted); }
+    .btn-send {
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%);
+      border: none;
+      border-radius: 8px;
+      color: #1a1614;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .btn-send:hover:not(:disabled) { opacity: 0.95; }
+    .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+    .hint {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+    .hint.warn { color: #d4624a; }
+    /* 设置弹窗 */
+    .modal-mask {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-mask.show {
+      display: flex;
+    }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 420px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: auto;
+    }
+    .modal h2 {
+      font-size: 1rem;
+      color: var(--accent);
+      margin: 0 0 1rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    label { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.35rem; }
+    input, select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+    .modal-actions button {
+      flex: 1;
+      padding: 0.65rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .modal-actions .btn-cancel {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .modal-actions .btn-save {
+      background: var(--accent);
+      border: none;
+      color: #1a1614;
+      font-weight: 600;
+    }
+    .loading-msg { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>AI 算命问答小助手</h1>
+    <button type="button" class="btn-icon" id="btnSettings">设置</button>
+  </header>
+
+  <main class="chat-area" id="chatArea">
+    <div class="msg assistant" id="welcomeMsg">
+      <div class="role">小助手</div>
+      <div class="bubble">您好，我是您的专属命理小助手。请先在右上角「设置」中填写您的出生年月日与时辰、性别，保存后即可在此向我提问，我会结合您的命盘为您解答运势、事业、姻缘等问题。</div>
+    </div>
+  </main>
+
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="inputText" placeholder="输入您的问题…" rows="1"></textarea>
+      <button type="button" class="btn-send" id="btnSend">发送</button>
+    </div>
+    <p class="hint warn" id="inputHint" style="display: none;">请先在设置中填写出生年月日与性别后再提问。</p>
+    <p class="hint" id="inputHintOk" style="display: none;">已根据您的出生信息排盘，可直接提问。</p>
+  </div>
+
+  <div class="modal-mask" id="modalMask">
+    <div class="modal">
+      <h2>生辰信息（必填后才能提问）</h2>
+      <div class="row">
+        <div>
+          <label>出生年</label>
+          <select id="birthYear"></select>
+        </div>
+        <div>
+          <label>出生月</label>
+          <select id="birthMonth"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>出生日</label>
+          <select id="birthDay"></select>
+        </div>
+        <div>
+          <label>性别</label>
+          <select id="gender">
+            <option value="male">男</option>
+            <option value="female">女</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label>出生时辰（选填，不填按午时 12:00）</label>
+        <input type="text" id="birthTime" placeholder="例如 14:30">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" id="btnModalCancel">取消</button>
+        <button type="button" class="btn-save" id="btnModalSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '';
+    const STORAGE_KEY = 'ai_suanming_birth';
+    const chatArea = document.getElementById('chatArea');
+    const inputText = document.getElementById('inputText');
+    const btnSend = document.getElementById('btnSend');
+    const inputHint = document.getElementById('inputHint');
+    const inputHintOk = document.getElementById('inputHintOk');
+    const btnSettings = document.getElementById('btnSettings');
+    const modalMask = document.getElementById('modalMask');
+    const birthYear = document.getElementById('birthYear');
+    const birthMonth = document.getElementById('birthMonth');
+    const birthDay = document.getElementById('birthDay');
+    const gender = document.getElementById('gender');
+    const birthTime = document.getElementById('birthTime');
+    const btnModalCancel = document.getElementById('btnModalCancel');
+    const btnModalSave = document.getElementById('btnModalSave');
+
+    let messages = [];
+    let birth = null;
+
+    function loadBirth() {
+      try {
+        const s = localStorage.getItem(STORAGE_KEY);
+        if (s) {
+          birth = JSON.parse(s);
+          if (birth && birth.birth_date && birth.gender) return birth;
+        }
+      } catch (e) {}
+      birth = null;
+      return null;
+    }
+
+    function saveBirthToStorage() {
+      if (!birth || !birth.birth_date || !birth.gender) return;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(birth));
+    }
+
+    function getBirthDateStr() {
+      const y = birthYear.value;
+      const m = String(birthMonth.value).padStart(2, '0');
+      const d = String(birthDay.value).padStart(2, '0');
+      return y + '-' + m + '-' + d;
+    }
+
+    function fillYearMonth() {
+      const thisYear = new Date().getFullYear();
+      if (birthYear.options.length === 0) {
+        for (let y = thisYear; y >= 1920; y--) {
+          const opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = y + ' 年';
+          birthYear.appendChild(opt);
+        }
+      }
+      if (birthMonth.options.length <= 1) {
+        birthMonth.innerHTML = '';
+        for (let m = 1; m <= 12; m++) {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m + ' 月';
+          birthMonth.appendChild(opt);
+        }
+      }
+    }
+
+    function fillDays() {
+      const y = parseInt(birthYear.value, 10);
+      const m = parseInt(birthMonth.value, 10);
+      const maxDay = new Date(y, m, 0).getDate();
+      birthDay.innerHTML = '';
+      for (let d = 1; d <= maxDay; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d + ' 日';
+        birthDay.appendChild(opt);
+      }
+    }
+
+    function openSettings() {
+      fillYearMonth();
+      fillDays();
+      if (birth) {
+        birthYear.value = birth.birth_date ? birth.birth_date.split('-')[0] : '';
+        birthMonth.value = birth.birth_date ? parseInt(birth.birth_date.split('-')[1], 10) : 1;
+        fillDays();
+        birthDay.value = birth.birth_date ? parseInt(birth.birth_date.split('-')[2], 10) : 1;
+        gender.value = birth.gender || 'male';
+        birthTime.value = birth.birth_time || '';
+      }
+      modalMask.classList.add('show');
+    }
+
+    function closeSettings() {
+      modalMask.classList.remove('show');
+    }
+
+    function onSaveSettings() {
+      const dateStr = getBirthDateStr();
+      birth = {
+        birth_date: dateStr,
+        gender: gender.value,
+        birth_time: birthTime.value.trim() || null
+      };
+      saveBirthToStorage();
+      closeSettings();
+      updateInputState();
+      inputHintOk.style.display = birth ? 'block' : 'none';
+      inputHint.style.display = birth ? 'none' : 'block';
+    }
+
+    function updateInputState() {
+      const hasBirth = loadBirth();
+      btnSend.disabled = !hasBirth;
+      inputHint.style.display = hasBirth ? 'none' : 'block';
+      inputHintOk.style.display = hasBirth ? 'block' : 'none';
+    }
+
+    function appendMessage(role, content, isTemp) {
+      const wrap = document.createElement('div');
+      wrap.className = 'msg ' + role;
+      if (isTemp) wrap.id = 'tempAssistantMsg';
+      wrap.innerHTML =
+        '<div class="role">' + (role === 'user' ? '我' : '小助手') + '</div>' +
+        '<div class="bubble">' + escapeHtml(content) + '</div>';
+      chatArea.appendChild(wrap);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return wrap;
+    }
+
+    function escapeHtml(s) {
+      const div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    function setTempContent(content) {
+      const el = document.getElementById('tempAssistantMsg');
+      if (el) {
+        const bubble = el.querySelector('.bubble');
+        if (bubble) bubble.textContent = content;
+      }
+    }
+
+    async function sendMessage() {
+      const raw = (inputText.value || '').trim();
+      if (!raw) return;
+      birth = loadBirth();
+      if (!birth || !birth.birth_date || !birth.gender) {
+        inputHint.style.display = 'block';
+        inputHint.textContent = '请先在设置中填写出生年月日与性别后再提问。';
+        return;
+      }
+      inputText.value = '';
+      messages.push({ role: 'user', content: raw });
+      appendMessage('user', raw);
+      appendMessage('assistant', '正在思考…', true);
+      btnSend.disabled = true;
+
+      const history = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
+      try {
+        const res = await fetch(API_BASE + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            birth_date: birth.birth_date,
+            gender: birth.gender,
+            birth_time: birth.birth_time || null,
+            message: raw,
+            history: history.slice(-10)
+          })
+        });
+        const data = await res.json();
+        const reply = res.ok && data.reply ? data.reply : (data.detail || '请求失败，请重试。');
+        const temp = document.getElementById('tempAssistantMsg');
+        if (temp) {
+          temp.id = '';
+          temp.querySelector('.bubble').textContent = reply;
+        }
+        messages.push({ role: 'assistant', content: reply });
+      } catch (e) {
+        const errMsg = '请求失败：请用浏览器打开 http://localhost:8000 或 http://127.0.0.1:8000（不要直接打开 HTML 文件），并确保已在终端启动后端：uvicorn app.main:app --port 8000';
+        setTempContent(errMsg);
+        messages.push({ role: 'assistant', content: errMsg });
+      }
+      btnSend.disabled = !loadBirth();
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    btnSettings.addEventListener('click', openSettings);
+    btnModalCancel.addEventListener('click', closeSettings);
+    btnModalSave.addEventListener('click', onSaveSettings);
+    modalMask.addEventListener('click', function(e) {
+      if (e.target === modalMask) closeSettings();
+    });
+    birthYear.addEventListener('change', fillDays);
+    birthMonth.addEventListener('change', fillDays);
+
+    btnSend.addEventListener('click', sendMessage);
+    inputText.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    loadBirth();
+    updateInputState();
+  </script>
+</body>
+</html>
