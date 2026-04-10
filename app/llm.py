@@ -8,6 +8,16 @@ import httpx
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
 MODEL = "deepseek-chat"
+MAX_HISTORY_MESSAGES = 6
+MAX_HISTORY_CHARS = 600
+MAX_USER_MESSAGE_CHARS = 800
+
+
+def _clip_text(text: str, max_chars: int) -> str:
+    text = (text or "").strip()
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "..."
 
 
 def build_user_context(paipan_result: dict, summary: str, career: str, love: str) -> str:
@@ -21,15 +31,21 @@ def build_user_context(paipan_result: dict, summary: str, career: str, love: str
         f"喜用神：{', '.join(paipan_result.get('xiyong') or [])}；忌神：{', '.join(paipan_result.get('jishen') or [])}。\n"
         f"当前年龄 {paipan_result.get('current_age')} 岁，大运 {paipan_result.get('current_dayun', {}).get('ganzhi') or '未起运'}，"
         f"流年 {paipan_result.get('current_liunian')}。\n"
-        f"命理总述：{summary}\n"
-        f"事业概况：{career}\n"
-        f"姻缘概况：{love}\n"
+        f"命理总述：{_clip_text(summary, 160)}\n"
+        f"工作及城市建议：{_clip_text(career, 180)}\n"
+        f"佩戴建议：{_clip_text(love, 160)}\n"
     )
 
 
-SYSTEM_PROMPT_TEMPLATE = """你是一位顶尖的八字命理师、国学大师，精通四柱八字、大运流年、五行喜用与人生运势解读。你说话专业、温和、有条理，善于结合命盘给出具体建议，同时提醒咨询者理性看待、以现实为准。
+SYSTEM_PROMPT_TEMPLATE = """你是一位有耐心、会循循善诱的命理老师。回答要结合命盘，语气温和、自然、清楚，像在和学生一对一交流。
 
-回答时请务必结合下面「当前咨询者的命理信息」来个性化解读，不要泛泛而谈。若问题与命理无关，可简短回应并引导回运势、事业、姻缘、流年等话题。
+回答规则：
+1. 先回答用户最关心的问题，再解释原因。
+2. 默认不要太长，控制在 220 字以内；除非用户明确要求详细展开。
+3. 不要写成营销文案或产品提示语，也不要故作神秘。
+4. 可以像老师一样适度安抚、提醒，但不要空泛说教。
+5. 给建议时尽量具体、能落地，优先回答用户这次提问本身。
+6. 若不确定，明确说“偏向”或“更适合”，不要说得过满。
 
 %s"""
 
@@ -52,10 +68,13 @@ async def chat_with_deepseek(
     system_content = SYSTEM_PROMPT_TEMPLATE % user_context
     messages = [{"role": "system", "content": system_content}]
     if history:
-        for h in history:
+        for h in history[-MAX_HISTORY_MESSAGES:]:
             if h.get("role") in ("user", "assistant") and h.get("content"):
-                messages.append({"role": h["role"], "content": h["content"]})
-    messages.append({"role": "user", "content": user_message})
+                messages.append({
+                    "role": h["role"],
+                    "content": _clip_text(h["content"], MAX_HISTORY_CHARS),
+                })
+    messages.append({"role": "user", "content": _clip_text(user_message, MAX_USER_MESSAGE_CHARS)})
 
     async with httpx.AsyncClient(timeout=60.0) as client:
         try:
@@ -68,8 +87,8 @@ async def chat_with_deepseek(
                 json={
                     "model": MODEL,
                     "messages": messages,
-                    "max_tokens": 2048,
-                    "temperature": 0.7,
+                    "max_tokens": 420,
+                    "temperature": 0.55,
                 },
             )
             r.raise_for_status()
@@ -79,6 +98,12 @@ async def chat_with_deepseek(
                 return "模型未返回有效内容，请重试。"
             return (choice.get("message") or {}).get("content") or "模型返回为空，请重试。"
         except httpx.HTTPStatusError as e:
-            return f"接口请求异常（{e.response.status_code}）：请检查 API Key 或稍后重试。"
+            detail = ""
+            try:
+                payload = e.response.json()
+                detail = payload.get("error", {}).get("message") or payload.get("detail") or ""
+            except Exception:
+                detail = e.response.text[:160]
+            return f"接口请求异常（{e.response.status_code}）：{detail or '请检查 API Key、额度或稍后重试。'}"
         except Exception as e:
             return f"请求失败：{str(e)}"

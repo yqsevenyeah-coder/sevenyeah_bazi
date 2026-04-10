@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-AI 算命问答小助手 - FastAPI 入口
+命询 - FastAPI 入口
 """
 from pathlib import Path
 from typing import List, Optional
@@ -21,7 +21,7 @@ from app.llm import build_user_context, chat_with_deepseek
 # 静态文件目录（项目根下的 static）
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 app = FastAPI(
-    title="AI 算命问答小助手",
+    title="命询",
     description="八字排盘，五行喜用，事业姻缘解读",
     version="1.0.0",
 )
@@ -51,6 +51,7 @@ class ChatRequest(BaseModel):
     birth_time: Optional[str] = Field(None, description="出生时辰，如 10:30")
     message: str = Field(..., description="用户提问")
     history: Optional[List[ChatMessage]] = Field(None, description="历史对话，用于上下文")
+    api_key: Optional[str] = Field(None, description="可选：前端传入的 DeepSeek API Key")
 
 
 if STATIC_DIR.exists():
@@ -174,5 +175,6 @@ async def api_chat(req: ChatRequest):
         user_message=req.message.strip(),
         user_context=user_context,
         history=history,
+        api_key=req.api_key,
     )
     return {"reply": reply}

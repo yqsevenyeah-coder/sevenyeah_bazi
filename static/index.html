@@ -3,113 +3,440 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI 算命问答小助手</title>
+  <title>命询</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+QingKe+HuangYou&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #1a1614;
-      --card: #252019;
-      --border: #3d3429;
-      --text: #e8e0d5;
-      --muted: #9a8f82;
-      --accent: #c9a227;
-      --accent-soft: #b8921f;
+      --bg: #0f0c09;
+      --bg-soft: #17120e;
+      --card: rgba(28, 22, 17, 0.88);
+      --card-strong: rgba(36, 28, 22, 0.96);
+      --border: rgba(215, 184, 109, 0.18);
+      --border-strong: rgba(215, 184, 109, 0.4);
+      --text: #f0e7d8;
+      --muted: #ab9d88;
+      --accent: #d8b45f;
+      --accent-soft: #a47a2a;
+      --accent-deep: #6e4d18;
+      --danger: #d4624a;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top, rgba(216, 180, 95, 0.18), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(103, 58, 13, 0.24), transparent 24%),
+        linear-gradient(180deg, #17110d 0%, #0f0c09 50%, #120d09 100%);
       color: var(--text);
       font-family: 'Noto Serif SC', serif;
       line-height: 1.6;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      width: 38vw;
+      height: 38vw;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.22;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      top: -8vw;
+      right: -8vw;
+      background: rgba(182, 127, 40, 0.26);
+    }
+    body::after {
+      bottom: -12vw;
+      left: -10vw;
+      background: rgba(87, 50, 18, 0.34);
     }
     .header {
+      position: relative;
+      z-index: 1;
       flex-shrink: 0;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem 0.95rem;
+      border-bottom: 1px solid rgba(216, 180, 95, 0.14);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--card);
+      gap: 1.5rem;
+      background: linear-gradient(180deg, rgba(26, 19, 14, 0.94), rgba(19, 14, 10, 0.82));
+      backdrop-filter: blur(16px);
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      flex-shrink: 0;
     }
     .header h1 {
       font-family: 'ZCOOL QingKe HuangYou', serif;
-      font-size: 1.25rem;
+      font-size: 1.7rem;
+      letter-spacing: 0.08em;
       color: var(--accent);
       margin: 0;
     }
+    .brand-subtitle {
+      font-size: 0.76rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(240, 231, 216, 0.45);
+    }
     .btn-icon {
-      padding: 0.5rem 0.75rem;
-      background: transparent;
+      padding: 0.68rem 1rem;
+      background: linear-gradient(180deg, rgba(44, 34, 26, 0.88), rgba(28, 22, 17, 0.88));
       border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 0.9rem;
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 0.92rem;
+      letter-spacing: 0.08em;
       cursor: pointer;
       font-family: inherit;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .btn-icon:hover { color: var(--accent); border-color: var(--accent); }
+    .btn-icon:hover {
+      color: var(--accent);
+      border-color: var(--border-strong);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
+      transform: translateY(-1px);
+    }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      border: 1px solid rgba(216, 180, 95, 0.14);
+      background: rgba(255,255,255,0.02);
+      box-shadow: none;
+      color: #f0cb57;
+      font-size: 1.5rem;
+    }
+    .avatar-btn {
+      position: relative;
+      overflow: visible;
+    }
+    .avatar-btn::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      transform: translateX(-50%);
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      box-sizing: border-box;
+    }
+    .avatar-btn::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      width: 18px;
+      height: 10px;
+      transform: translateX(-50%);
+      border: 2px solid currentColor;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      border-bottom: none;
+      box-sizing: border-box;
+    }
+    .gear-btn {
+      font-size: 1.38rem;
+    }
+    .icon-btn:hover {
+      color: #ffd867;
+      transform: translateY(-1px);
+      border-color: rgba(216, 180, 95, 0.28);
+      background: rgba(216, 180, 95, 0.06);
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+    }
+    .api-key-trigger.saved {
+      color: #ffd867;
+      text-shadow: 0 0 10px rgba(240, 203, 87, 0.18);
+      border-color: rgba(216, 180, 95, 0.34);
+      background: rgba(216, 180, 95, 0.08);
+    }
     .chat-area {
+      position: relative;
+      z-index: 1;
       flex: 1;
-      overflow: auto;
-      padding: 1rem;
-      max-width: 720px;
+      overflow: visible;
+      padding: 1.5rem 1rem 1rem;
+      max-width: 940px;
       margin: 0 auto;
       width: 100%;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      padding: 1.4rem 1.4rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, rgba(216, 180, 95, 0.13), transparent 34%),
+        linear-gradient(180deg, rgba(34, 26, 20, 0.92), rgba(20, 15, 11, 0.86));
+      box-shadow: var(--shadow);
+    }
+    .hero.hidden {
+      display: none;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent, rgba(216, 180, 95, 0.08), transparent);
+      transform: translateX(-100%);
+      animation: heroGlow 8s linear infinite;
+      pointer-events: none;
+    }
+    .hero-eyebrow {
+      color: rgba(216, 180, 95, 0.76);
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 0.65rem;
+    }
+    .hero-title {
+      margin: 0;
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+      font-size: clamp(2rem, 6vw, 3.4rem);
+      line-height: 1;
+      letter-spacing: 0.08em;
+      color: #f3dfaf;
+    }
+    .hero-desc {
+      max-width: 42rem;
+      margin: 0.8rem 0 1.15rem;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+    }
+    .hero-tag {
+      padding: 0.42rem 0.78rem;
+      border: 1px solid rgba(216, 180, 95, 0.18);
+      border-radius: 999px;
+      background: rgba(216, 180, 95, 0.08);
+      color: #f0d89e;
+      font-size: 0.82rem;
+    }
+    .tabs {
+      display: flex;
+      align-items: center;
+      gap: 2.2rem;
+      min-width: 0;
+    }
+    .tab-btn {
+      padding: 0 0 0.5rem;
+      border-radius: 0;
+      border: none;
+      border-bottom: 3px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      background: transparent;
+      border-bottom-color: var(--accent);
+      box-shadow: none;
+    }
+    .tab-btn:hover {
+      color: #e8d3a0;
+    }
+    .tab-panel {
+      display: none;
+    }
+    .tab-panel.active {
+      display: block;
+    }
+    .chat-stage {
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(25, 20, 16, 0.96), rgba(18, 14, 11, 0.96));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .chat-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid rgba(216, 180, 95, 0.1);
+    }
+    .assistant-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      min-width: 0;
+    }
+    .assistant-avatar {
+      width: 54px;
+      height: 54px;
+      border-radius: 16px;
+      border: 1px solid rgba(216, 180, 95, 0.22);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(248, 211, 114, 0.9), transparent 25%),
+        radial-gradient(circle at 70% 70%, rgba(72, 40, 15, 0.85), transparent 28%),
+        linear-gradient(135deg, #0f1a2c 0%, #26170f 45%, #120f18 100%);
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .assistant-avatar::before {
+      content: "✦";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #f4ce62;
+      font-size: 1.4rem;
+      text-shadow: 0 0 18px rgba(244, 206, 98, 0.35);
+    }
+    .assistant-name {
+      color: var(--accent);
+      font-size: 1.55rem;
+      line-height: 1.1;
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+      margin-bottom: 0.15rem;
+    }
+    .assistant-status {
+      color: rgba(240, 231, 216, 0.72);
+      font-size: 0.82rem;
+    }
+    .assistant-status::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 0.45rem;
+      border-radius: 50%;
+      background: #b99939;
+      vertical-align: middle;
+      box-shadow: 0 0 0 4px rgba(185, 153, 57, 0.12);
     }
     .msg {
-      margin-bottom: 1rem;
-      max-width: 90%;
+      margin-bottom: 1.35rem;
+      max-width: min(88%, 860px);
     }
-    .msg.user { margin-left: auto; }
+    .msg.user {
+      margin-left: auto;
+      width: fit-content;
+      max-width: min(62%, 620px);
+    }
     .msg .bubble {
-      padding: 0.75rem 1rem;
-      border-radius: 12px;
+      padding: 1.15rem 1.25rem;
+      border-radius: 18px;
       white-space: pre-wrap;
       word-break: break-word;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
     }
     .msg.user .bubble {
-      background: var(--accent-soft);
-      color: #1a1614;
-      border-bottom-right-radius: 4px;
+      background: linear-gradient(180deg, rgba(69, 66, 63, 0.86), rgba(56, 54, 51, 0.9));
+      color: #f0e7d8;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-bottom-right-radius: 8px;
+      display: inline-block;
     }
     .msg.assistant .bubble {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 4px;
+      background: linear-gradient(180deg, rgba(32, 28, 24, 0.96), rgba(24, 21, 18, 0.96));
+      border: 1px solid rgba(216, 180, 95, 0.16);
+      border-bottom-left-radius: 8px;
     }
     .msg .role {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 0.25rem;
+      font-size: 0.82rem;
+      color: rgba(216, 180, 95, 0.78);
+      margin-bottom: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .msg.assistant .role {
+      color: rgba(216, 180, 95, 0.76);
+    }
+    .msg.user .role {
+      text-align: right;
+      color: rgba(240, 231, 216, 0.64);
+    }
+    .msg-meta {
+      margin-top: 0.45rem;
+      color: rgba(240, 231, 216, 0.34);
+      font-size: 0.76rem;
     }
     .input-area {
+      position: relative;
+      z-index: 1;
       flex-shrink: 0;
-      padding: 1rem;
-      border-top: 1px solid var(--border);
-      background: var(--card);
-      max-width: 720px;
+      padding: 0 1rem 1rem;
+      max-width: 940px;
       margin: 0 auto;
       width: 100%;
+    }
+    .input-shell {
+      border: 1px solid var(--border);
+      border-radius: 0 0 28px 28px;
+      border-top: 1px solid rgba(216, 180, 95, 0.1);
+      background: linear-gradient(180deg, rgba(27, 22, 18, 0.98), rgba(18, 15, 12, 0.98));
+      box-shadow: var(--shadow);
+      padding: 1rem 1.2rem 1.15rem;
+      backdrop-filter: blur(16px);
     }
     .input-row {
       display: flex;
-      gap: 0.5rem;
-      align-items: flex-end;
+      gap: 0.8rem;
+      align-items: center;
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      border-radius: 14px;
+      background: rgba(62, 59, 56, 0.88);
+      padding: 0.7rem 0.8rem;
     }
     .input-row textarea {
       flex: 1;
-      min-height: 48px;
-      max-height: 160px;
-      padding: 0.6rem 0.75rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      min-height: 36px;
+      max-height: 180px;
+      padding: 0.2rem 0.2rem;
+      background: transparent;
+      border: none;
       color: var(--text);
       font-family: inherit;
       font-size: 1rem;
@@ -117,34 +444,66 @@
     }
     .input-row textarea:focus {
       outline: none;
-      border-color: var(--accent);
+      box-shadow: none;
     }
     .input-row textarea::placeholder { color: var(--muted); }
     .btn-send {
-      padding: 0.6rem 1.2rem;
-      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%);
+      padding: 1rem 1.45rem;
+      min-width: 130px;
+      background: linear-gradient(180deg, #f0cb57 0%, #d5a63d 100%);
       border: none;
-      border-radius: 8px;
-      color: #1a1614;
-      font-weight: 600;
+      border-radius: 10px;
+      color: #21160c;
+      font-weight: 700;
       cursor: pointer;
       font-family: inherit;
       font-size: 1rem;
+      letter-spacing: 0.08em;
+      box-shadow: 0 16px 28px rgba(213, 166, 61, 0.18);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     }
-    .btn-send:hover:not(:disabled) { opacity: 0.95; }
+    .btn-send::after {
+      content: "➤";
+      margin-left: 0.55rem;
+      font-size: 0.95rem;
+    }
+    .btn-send:hover:not(:disabled) {
+      opacity: 0.98;
+      transform: translateY(-1px);
+      box-shadow: 0 18px 34px rgba(213, 166, 61, 0.28);
+    }
     .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
     .hint {
       font-size: 0.85rem;
       color: var(--muted);
-      margin-top: 0.5rem;
+      margin: 0.75rem 0 0;
     }
-    .hint.warn { color: #d4624a; }
+    .hint.warn { color: var(--danger); }
+    .quick-prompts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+    .quick-prompt {
+      padding: 0.55rem 0.95rem;
+      border-radius: 999px;
+      border: 1px solid rgba(216, 180, 95, 0.22);
+      background: transparent;
+      color: rgba(240, 231, 216, 0.86);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
     /* 设置弹窗 */
     .modal-mask {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background:
+        radial-gradient(circle at top, rgba(216, 180, 95, 0.12), transparent 26%),
+        rgba(4, 3, 2, 0.78);
+      backdrop-filter: blur(18px);
       z-index: 100;
       align-items: center;
       justify-content: center;
@@ -154,114 +513,808 @@
       display: flex;
     }
     .modal {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      max-width: 420px;
+      position: relative;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(33, 26, 20, 0.98), rgba(18, 15, 11, 0.98));
+      border: 1px solid rgba(216, 180, 95, 0.18);
+      border-radius: 24px;
+      padding: 1.25rem;
+      max-width: 560px;
       width: 100%;
-      max-height: 90vh;
+      max-height: 86vh;
       overflow: auto;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    }
+    .modal::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(240, 203, 87, 0.88), transparent);
+    }
+    .modal-header {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .modal-kicker {
+      color: rgba(216, 180, 95, 0.92);
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
     }
     .modal h2 {
-      font-size: 1rem;
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+      font-size: clamp(1.65rem, 4.4vw, 2.5rem);
+      letter-spacing: 0.08em;
       color: var(--accent);
-      margin: 0 0 1rem 0;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
+      margin: 0;
+      line-height: 1.05;
     }
-    label { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.35rem; }
+    .modal-divider {
+      width: 68px;
+      height: 2px;
+      margin: 0.45rem auto 0.6rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .modal-subtitle {
+      margin: 0;
+      color: rgba(240, 231, 216, 0.5);
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .modal-form {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .row {
+      display: grid;
+      gap: 1rem;
+    }
+    .row-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .row-gender-time { grid-template-columns: 1fr; }
+    .field-card {
+      padding: 0.82rem 0.82rem 0.72rem;
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    }
+    .field-card.compact {
+      padding-bottom: 1rem;
+    }
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.74rem;
+      margin-bottom: 0.45rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .gender-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.15rem;
+    }
+    .gender-card {
+      position: relative;
+    }
+    .gender-card input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      margin: 0;
+    }
+    .gender-card span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+      border-radius: 14px;
+      border: 1px solid rgba(216, 180, 95, 0.14);
+      background: rgba(255,255,255,0.03);
+      color: #d7cab7;
+      font-size: 0.96rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .gender-card input:checked + span {
+      border-color: rgba(240, 203, 87, 0.44);
+      background: linear-gradient(180deg, rgba(216, 180, 95, 0.16), rgba(216, 180, 95, 0.07));
+      color: #f2d47f;
+      box-shadow: inset 0 0 0 1px rgba(240, 203, 87, 0.12), 0 12px 24px rgba(0, 0, 0, 0.24);
+    }
+    .gender-card span:hover {
+      transform: translateY(-1px);
+    }
+    .select-wrap,
+    .input-wrap {
+      position: relative;
+    }
     input, select {
       width: 100%;
-      padding: 0.6rem 0.75rem;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 0.82rem 0.85rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      border-radius: 14px;
       color: var(--text);
       font-family: inherit;
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
+      font-size: 0.98rem;
+      margin-bottom: 0;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
-    .modal-actions button {
-      flex: 1;
-      padding: 0.65rem;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 1rem;
+    select {
+      padding-right: 2.75rem;
       cursor: pointer;
+    }
+    .select-wrap::after {
+      content: "⌄";
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-52%);
+      color: var(--accent);
+      font-size: 1.2rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 0 0 4px rgba(216, 180, 95, 0.08);
+    }
+    .field-tip {
+      margin-top: 0.42rem;
+      color: rgba(240, 231, 216, 0.38);
+      font-size: 0.74rem;
+    }
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 0.1rem;
+      padding-top: 0.35rem;
+    }
+    .modal-actions button {
+      padding: 0.8rem 1.1rem;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 0.96rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     }
     .modal-actions .btn-cancel {
       background: transparent;
       border: 1px solid var(--border);
       color: var(--muted);
     }
+    .modal-actions .btn-cancel:hover {
+      border-color: rgba(216, 180, 95, 0.28);
+      color: var(--text);
+    }
     .modal-actions .btn-save {
-      background: var(--accent);
+      min-width: 140px;
+      background: linear-gradient(180deg, #f0cb57 0%, #d5a63d 100%);
       border: none;
-      color: #1a1614;
-      font-weight: 600;
+      color: #21160c;
+      font-weight: 700;
+      box-shadow: 0 18px 34px rgba(213, 166, 61, 0.2);
+    }
+    .modal-actions .btn-save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 22px 38px rgba(213, 166, 61, 0.28);
     }
     .loading-msg { color: var(--muted); font-size: 0.9rem; }
+    .chat-panel {
+      min-height: 420px;
+      padding: 1.2rem;
+      background:
+        radial-gradient(circle at top, rgba(216, 180, 95, 0.06), transparent 32%),
+        linear-gradient(180deg, rgba(24, 20, 16, 0.92), rgba(17, 14, 11, 0.96));
+    }
+    .api-key-trigger {
+      letter-spacing: 0;
+    }
+    .api-key-trigger.saved {
+      color: var(--accent);
+      border-color: rgba(216, 180, 95, 0.28);
+    }
+    .api-key-mask {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      background: rgba(4, 3, 2, 0.68);
+      backdrop-filter: blur(12px);
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .api-key-mask.show {
+      display: flex;
+    }
+    .api-key-dialog {
+      width: min(520px, 100%);
+      padding: 1.15rem;
+      border-radius: 22px;
+      border: 1px solid rgba(216, 180, 95, 0.14);
+      background: linear-gradient(180deg, rgba(30, 23, 18, 0.98), rgba(19, 15, 12, 0.98));
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+    }
+    .api-key-title {
+      color: var(--accent);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.45rem;
+    }
+    .api-key-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .api-key-input {
+      flex: 1;
+      padding: 0.82rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+    .api-key-input:focus {
+      outline: none;
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 4px rgba(216, 180, 95, 0.08);
+    }
+    .api-key-save {
+      padding: 0.82rem 1rem;
+      border: 1px solid rgba(216, 180, 95, 0.18);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .api-key-hint {
+      margin-top: 0.45rem;
+      color: rgba(240, 231, 216, 0.5);
+      font-size: 0.8rem;
+    }
+    .api-key-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.7rem;
+      margin-top: 0.9rem;
+    }
+    .api-key-close,
+    .api-key-confirm {
+      padding: 0.78rem 1rem;
+      border-radius: 12px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .api-key-close {
+      border: 1px solid rgba(216, 180, 95, 0.14);
+      background: transparent;
+      color: var(--muted);
+    }
+    .api-key-confirm {
+      border: none;
+      background: linear-gradient(180deg, #f0cb57 0%, #d5a63d 100%);
+      color: #21160c;
+      font-weight: 700;
+    }
+    .insight-card {
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(30, 23, 18, 0.92), rgba(19, 15, 11, 0.92));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .insight-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.2rem 0.9rem;
+      border-bottom: 1px solid rgba(216, 180, 95, 0.1);
+    }
+    .insight-title {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+    }
+    .insight-subtitle {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .insight-body {
+      padding: 1rem 1.2rem 1.15rem;
+    }
+    .insight-empty {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .advice-grid {
+      display: grid;
+      gap: 0.9rem;
+    }
+    .advice-card {
+      border: 1px solid rgba(216, 180, 95, 0.12);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(30, 23, 18, 0.92), rgba(19, 15, 11, 0.92));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .advice-card-head {
+      padding: 0.95rem 1.1rem 0.8rem;
+      border-bottom: 1px solid rgba(216, 180, 95, 0.08);
+      color: var(--accent);
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+    }
+    .advice-card-body {
+      padding: 1rem 1.1rem 1.1rem;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+    .birth-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-bottom: 1rem;
+    }
+    .summary-chip {
+      padding: 0.42rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(216, 180, 95, 0.08);
+      border: 1px solid rgba(216, 180, 95, 0.14);
+      color: #e9d6ab;
+      font-size: 0.82rem;
+    }
+    .fate-matrix {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      align-items: stretch;
+    }
+    .fate-side {
+      display: grid;
+      grid-template-rows: 74px 88px 88px;
+      gap: 0.7rem;
+    }
+    .fate-side-item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      border: 1px solid rgba(216, 180, 95, 0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--muted);
+      font-size: 0.86rem;
+      letter-spacing: 0.1em;
+    }
+    .fate-columns {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
+    .fate-col {
+      display: grid;
+      grid-template-rows: 74px 88px 88px;
+      gap: 0.7rem;
+    }
+    .fate-cell {
+      border-radius: 18px;
+      border: 1px solid rgba(216, 180, 95, 0.1);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      padding: 0.85rem 0.7rem;
+      text-align: center;
+    }
+    .fate-col.current .fate-cell {
+      border-color: rgba(240, 203, 87, 0.3);
+      background: linear-gradient(180deg, rgba(216, 180, 95, 0.18), rgba(216, 180, 95, 0.07));
+      box-shadow: 0 16px 28px rgba(0, 0, 0, 0.2);
+    }
+    .fate-col-title {
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .fate-col-meta {
+      color: rgba(240, 231, 216, 0.52);
+      font-size: 0.74rem;
+      line-height: 1.4;
+    }
+    .fate-char {
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+      font-size: 2.2rem;
+      line-height: 1;
+      margin-bottom: 0.28rem;
+    }
+    .fate-char-desc {
+      color: rgba(240, 231, 216, 0.48);
+      font-size: 0.72rem;
+    }
+    .insight-extra {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .element-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.1rem;
+    }
+    .element-chip {
+      padding: 0.36rem 0.62rem;
+      border-radius: 999px;
+      border: 1px solid rgba(216, 180, 95, 0.16);
+      background: rgba(255,255,255,0.03);
+      color: #ecd8a8;
+      font-size: 0.82rem;
+    }
+    .extra-item {
+      padding: 0.75rem 0.8rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(216, 180, 95, 0.08);
+    }
+    .extra-label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.28rem;
+    }
+    .extra-value {
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+    .dayun-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+    .dayun-section {
+      margin-top: 1rem;
+    }
+    .dayun-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.7rem;
+    }
+    .dayun-section-title {
+      color: var(--accent);
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+    }
+    .dayun-section-current {
+      color: rgba(240, 231, 216, 0.64);
+      font-size: 0.82rem;
+    }
+    .dayun-item {
+      padding: 0.8rem 0.7rem;
+      border-radius: 16px;
+      border: 1px solid rgba(216, 180, 95, 0.08);
+      background: rgba(255,255,255,0.03);
+      text-align: center;
+    }
+    .dayun-item.current {
+      border-color: rgba(240, 203, 87, 0.36);
+      background: linear-gradient(180deg, rgba(216, 180, 95, 0.16), rgba(216, 180, 95, 0.06));
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+    }
+    .dayun-gz {
+      color: #f1d690;
+      font-size: 1.2rem;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+      font-family: 'ZCOOL QingKe HuangYou', serif;
+    }
+    .dayun-age {
+      color: rgba(240, 231, 216, 0.6);
+      font-size: 0.74rem;
+    }
+
+    @keyframes heroGlow {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @media (max-width: 860px) {
+      .row-three,
+      .row-gender-time {
+        grid-template-columns: 1fr;
+      }
+      .fate-matrix {
+        grid-template-columns: 1fr;
+      }
+      .fate-side {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr;
+      }
+      .modal {
+        padding: 1rem;
+        border-radius: 24px;
+      }
+      .modal-actions {
+        justify-content: stretch;
+      }
+      .modal-actions button {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        padding: 0.95rem 0.9rem 0.85rem;
+        align-items: flex-start;
+      }
+      .header-left {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      .header h1 {
+        font-size: 1.4rem;
+      }
+      .brand-subtitle {
+        display: none;
+      }
+      .tabs {
+        gap: 1.25rem;
+        overflow-x: auto;
+        padding-bottom: 0.1rem;
+      }
+      .chat-area,
+      .input-area {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .chat-topbar {
+        padding: 0.95rem 1rem;
+      }
+      .api-key-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .header-right {
+        margin-left: auto;
+        gap: 0.8rem;
+      }
+      .assistant-name {
+        font-size: 1.35rem;
+      }
+      .assistant-avatar {
+        width: 48px;
+        height: 48px;
+      }
+      .hero {
+        padding: 1.15rem 1rem 1rem;
+        border-radius: 20px;
+      }
+      .fate-columns,
+      .insight-extra {
+        grid-template-columns: 1fr 1fr;
+      }
+      .input-shell {
+        padding: 0.85rem 0.9rem 1rem;
+        border-radius: 0 0 22px 22px;
+      }
+      .input-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-send {
+        width: 100%;
+      }
+      .msg {
+        max-width: 100%;
+      }
+      .msg.user {
+        max-width: 88%;
+      }
+      .modal-mask {
+        padding: 0.75rem;
+      }
+      .gender-grid {
+        grid-template-columns: 1fr;
+      }
+      .fate-columns,
+      .insight-extra {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
   <header class="header">
-    <h1>AI 算命问答小助手</h1>
-    <button type="button" class="btn-icon" id="btnSettings">设置</button>
+    <div class="header-left">
+      <div class="brand">
+        <h1>命询</h1>
+        <div class="brand-subtitle">MingXun Oracle</div>
+      </div>
+      <div class="tabs" id="tabs">
+        <button type="button" class="tab-btn active" data-tab="bazi">四柱</button>
+        <button type="button" class="tab-btn" data-tab="chat">问答</button>
+        <button type="button" class="tab-btn" data-tab="advice">建议</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <button type="button" class="btn-icon icon-btn gear-btn api-key-trigger" id="btnApiKeyModal" aria-label="设置 API Key">⚙</button>
+      <button type="button" class="btn-icon icon-btn avatar-btn" id="btnBirthProfile" aria-label="填写生辰信息"></button>
+    </div>
   </header>
 
   <main class="chat-area" id="chatArea">
-    <div class="msg assistant" id="welcomeMsg">
-      <div class="role">小助手</div>
-      <div class="bubble">您好，我是您的专属命理小助手。请先在右上角「设置」中填写您的出生年月日与时辰、性别，保存后即可在此向我提问，我会结合您的命盘为您解答运势、事业、姻缘等问题。</div>
-    </div>
+    <section class="hero">
+      <div class="hero-eyebrow">Eastern Destiny Reading Interface</div>
+      <h2 class="hero-title">命盘已定，问运可知</h2>
+      <p class="hero-desc">填写出生信息后，小助手会结合四柱、大运、流年与喜用神，为你解读事业走势、情感关系和阶段机会，让每一次提问都落在你的个人命盘上。</p>
+      <div class="hero-tags">
+        <span class="hero-tag">四柱排盘</span>
+        <span class="hero-tag">流年趋势</span>
+        <span class="hero-tag">事业姻缘解读</span>
+      </div>
+    </section>
+
+    <section class="tab-panel active" id="panel-bazi">
+      <section class="insight-card" id="insightCard">
+        <div class="insight-head">
+          <div>
+            <h3 class="insight-title">命盘总览</h3>
+            <div class="insight-subtitle">Four Pillars Overview</div>
+          </div>
+        </div>
+        <div class="insight-body" id="insightBody">
+          <div class="insight-empty">保存生辰信息后，这里会显示你的四柱、当前大运和流年。</div>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-panel" id="panel-chat">
+      <div class="chat-stage">
+        <div class="chat-topbar">
+          <div class="assistant-meta">
+            <div class="assistant-avatar"></div>
+            <div>
+              <div class="assistant-name">命询</div>
+              <div class="assistant-status">Celestial Assistant Online</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-panel" id="chatMessages">
+          <div class="msg assistant" id="welcomeMsg">
+            <div class="role">The Archive</div>
+            <div class="bubble">您好，我是命询。填写出生信息后，您可以直接咨询事业、感情、流年趋势、佩戴建议或工作城市选择，我会结合您的命盘给出分析。</div>
+            <div class="msg-meta">初始引导</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-panel" id="panel-advice">
+      <div class="advice-grid" id="adviceBody">
+        <div class="insight-empty">保存生辰信息后，这里会生成你的佩戴建议和工作及城市建议。</div>
+      </div>
+    </section>
   </main>
 
-  <div class="input-area">
-    <div class="input-row">
-      <textarea id="inputText" placeholder="输入您的问题…" rows="1"></textarea>
-      <button type="button" class="btn-send" id="btnSend">发送</button>
+  <div class="api-key-mask" id="apiKeyMask">
+    <div class="api-key-dialog">
+      <div class="api-key-title">DeepSeek API Key</div>
+      <div class="api-key-row">
+        <input type="password" class="api-key-input" id="apiKeyInput" placeholder="在这里填写你的 DeepSeek API Key">
+        <button type="button" class="api-key-save" id="btnSaveApiKey">保存 Key</button>
+      </div>
+      <div class="api-key-hint" id="apiKeyHint">仅保存在当前浏览器本地，用于问答接口调用。</div>
+      <div class="api-key-actions">
+        <button type="button" class="api-key-close" id="btnApiKeyClose">关闭</button>
+        <button type="button" class="api-key-confirm" id="btnApiKeyConfirm">保存并使用</button>
+      </div>
     </div>
-    <p class="hint warn" id="inputHint" style="display: none;">请先在设置中填写出生年月日与性别后再提问。</p>
-    <p class="hint" id="inputHintOk" style="display: none;">已根据您的出生信息排盘，可直接提问。</p>
+  </div>
+
+  <div class="input-area">
+    <div class="input-shell">
+      <div class="input-row">
+        <textarea id="inputText" placeholder="输入您的问题，例如：我今年适合换工作吗？" rows="1"></textarea>
+        <button type="button" class="btn-send" id="btnSend">发送</button>
+      </div>
+      <p class="hint warn" id="inputHint" style="display: none;">请先在设置中填写出生年月日与性别后再提问。</p>
+      <p class="hint" id="inputHintOk" style="display: none;">已根据您的出生信息排盘，可直接提问。</p>
+      <div class="quick-prompts">
+        <button type="button" class="quick-prompt" data-prompt="我接下来三个月的事业起伏怎么样？">事业起伏</button>
+        <button type="button" class="quick-prompt" data-prompt="我近期的感情运势有什么变化？">感情关系</button>
+        <button type="button" class="quick-prompt" data-prompt="我今年最适合把握的运势方向是什么？">流年趋势</button>
+      </div>
+    </div>
   </div>
 
   <div class="modal-mask" id="modalMask">
     <div class="modal">
-      <h2>生辰信息（必填后才能提问）</h2>
-      <div class="row">
-        <div>
-          <label>出生年</label>
-          <select id="birthYear"></select>
-        </div>
-        <div>
-          <label>出生月</label>
-          <select id="birthMonth"></select>
-        </div>
+      <div class="modal-header">
+        <div class="modal-kicker">Celestial Birth Data Archive</div>
+        <h2>生辰信息</h2>
+        <div class="modal-divider"></div>
+        <p class="modal-subtitle">填写后即可开启你的专属命盘问答</p>
       </div>
-      <div class="row">
-        <div>
-          <label>出生日</label>
-          <select id="birthDay"></select>
+      <div class="modal-form">
+        <div class="row row-three">
+          <div class="field-card">
+            <label>出生年 (Year)</label>
+            <div class="select-wrap">
+              <select id="birthYear"></select>
+            </div>
+          </div>
+          <div class="field-card">
+            <label>出生月 (Month)</label>
+            <div class="select-wrap">
+              <select id="birthMonth"></select>
+            </div>
+          </div>
+          <div class="field-card">
+            <label>出生日 (Day)</label>
+            <div class="select-wrap">
+              <select id="birthDay"></select>
+            </div>
+          </div>
         </div>
-        <div>
-          <label>性别</label>
-          <select id="gender">
-            <option value="male">男</option>
-            <option value="female">女</option>
-          </select>
+
+        <div class="row row-gender-time">
+          <div class="field-card compact">
+            <label>性别 (Gender)</label>
+            <div class="gender-grid">
+              <label class="gender-card">
+                <input type="radio" name="genderCard" value="male" checked>
+                <span>乾 (男)</span>
+              </label>
+              <label class="gender-card">
+                <input type="radio" name="genderCard" value="female">
+                <span>坤 (女)</span>
+              </label>
+            </div>
+            <select id="gender" style="display: none;">
+              <option value="male">男</option>
+              <option value="female">女</option>
+            </select>
+          </div>
+          <div class="field-card">
+            <label>出生时辰 (Time)</label>
+            <div class="input-wrap">
+              <input type="text" id="birthTime" placeholder="例如 14:30">
+            </div>
+            <div class="field-tip">可留空，系统默认按午时 12:00 推演</div>
+          </div>
         </div>
-      </div>
-      <div>
-        <label>出生时辰（选填，不填按午时 12:00）</label>
-        <input type="text" id="birthTime" placeholder="例如 14:30">
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn-cancel" id="btnModalCancel">取消</button>
-        <button type="button" class="btn-save" id="btnModalSave">保存</button>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-cancel" id="btnModalCancel">取消</button>
+          <button type="button" class="btn-save" id="btnModalSave">保存</button>
+        </div>
       </div>
     </div>
   </div>
@@ -269,12 +1322,14 @@
   <script>
     const API_BASE = '';
     const STORAGE_KEY = 'ai_suanming_birth';
+    const API_KEY_STORAGE_KEY = 'ai_suanming_deepseek_key';
     const chatArea = document.getElementById('chatArea');
+    const chatMessages = document.getElementById('chatMessages');
     const inputText = document.getElementById('inputText');
     const btnSend = document.getElementById('btnSend');
     const inputHint = document.getElementById('inputHint');
     const inputHintOk = document.getElementById('inputHintOk');
-    const btnSettings = document.getElementById('btnSettings');
+    const btnBirthProfile = document.getElementById('btnBirthProfile');
     const modalMask = document.getElementById('modalMask');
     const birthYear = document.getElementById('birthYear');
     const birthMonth = document.getElementById('birthMonth');
@@ -283,9 +1338,26 @@
     const birthTime = document.getElementById('birthTime');
     const btnModalCancel = document.getElementById('btnModalCancel');
     const btnModalSave = document.getElementById('btnModalSave');
+    const genderCards = Array.from(document.querySelectorAll('input[name="genderCard"]'));
+    const insightBody = document.getElementById('insightBody');
+    const adviceBody = document.getElementById('adviceBody');
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+    const inputArea = document.querySelector('.input-area');
+    const hero = document.querySelector('.hero');
+    const quickPrompts = Array.from(document.querySelectorAll('.quick-prompt'));
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const btnSaveApiKey = document.getElementById('btnSaveApiKey');
+    const apiKeyHint = document.getElementById('apiKeyHint');
+    const btnApiKeyModal = document.getElementById('btnApiKeyModal');
+    const apiKeyMask = document.getElementById('apiKeyMask');
+    const btnApiKeyClose = document.getElementById('btnApiKeyClose');
+    const btnApiKeyConfirm = document.getElementById('btnApiKeyConfirm');
 
     let messages = [];
     let birth = null;
+    let paipanResult = null;
+    let activeTab = 'bazi';
 
     function loadBirth() {
       try {
@@ -302,6 +1374,46 @@
     function saveBirthToStorage() {
       if (!birth || !birth.birth_date || !birth.gender) return;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(birth));
+    }
+
+    function loadApiKey() {
+      try {
+        return localStorage.getItem(API_KEY_STORAGE_KEY) || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function saveApiKey() {
+      const key = (apiKeyInput.value || '').trim();
+      try {
+        if (key) {
+          localStorage.setItem(API_KEY_STORAGE_KEY, key);
+          apiKeyHint.textContent = 'API Key 已保存在当前浏览器，可直接开始问答。';
+        } else {
+          localStorage.removeItem(API_KEY_STORAGE_KEY);
+          apiKeyHint.textContent = '已清空本地保存的 API Key。';
+        }
+        updateApiKeyTrigger();
+      } catch (e) {
+        apiKeyHint.textContent = '保存失败，请检查浏览器是否允许本地存储。';
+      }
+    }
+
+    function updateApiKeyTrigger() {
+      const hasKey = !!loadApiKey();
+      btnApiKeyModal.classList.toggle('saved', hasKey);
+      btnApiKeyModal.setAttribute('title', hasKey ? 'API Key 已配置' : '设置 API Key');
+      btnApiKeyModal.setAttribute('aria-label', hasKey ? 'API Key 已配置' : '设置 API Key');
+    }
+
+    function openApiKeyModal() {
+      apiKeyMask.classList.add('show');
+      apiKeyInput.focus();
+    }
+
+    function closeApiKeyModal() {
+      apiKeyMask.classList.remove('show');
     }
 
     function getBirthDateStr() {
@@ -356,6 +1468,7 @@
         gender.value = birth.gender || 'male';
         birthTime.value = birth.birth_time || '';
       }
+      syncGenderCards();
       modalMask.classList.add('show');
     }
 
@@ -364,6 +1477,7 @@
     }
 
     function onSaveSettings() {
+      syncGenderSelect();
       const dateStr = getBirthDateStr();
       birth = {
         birth_date: dateStr,
@@ -375,6 +1489,7 @@
       updateInputState();
       inputHintOk.style.display = birth ? 'block' : 'none';
       inputHint.style.display = birth ? 'none' : 'block';
+      fetchPaipan();
     }
 
     function updateInputState() {
@@ -382,16 +1497,32 @@
       btnSend.disabled = !hasBirth;
       inputHint.style.display = hasBirth ? 'none' : 'block';
       inputHintOk.style.display = hasBirth ? 'block' : 'none';
+      hero.classList.toggle('hidden', !!hasBirth);
+    }
+
+    function syncGenderCards() {
+      genderCards.forEach(card => {
+        card.checked = card.value === gender.value;
+      });
+    }
+
+    function syncGenderSelect() {
+      const checked = genderCards.find(card => card.checked);
+      if (checked) gender.value = checked.value;
     }
 
     function appendMessage(role, content, isTemp) {
       const wrap = document.createElement('div');
       wrap.className = 'msg ' + role;
       if (isTemp) wrap.id = 'tempAssistantMsg';
+      const now = new Date();
+      const timeText = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      const roleLabel = role === 'user' ? 'Seeker' : (isTemp ? 'Insight' : 'The Archive');
       wrap.innerHTML =
-        '<div class="role">' + (role === 'user' ? '我' : '小助手') + '</div>' +
-        '<div class="bubble">' + escapeHtml(content) + '</div>';
-      chatArea.appendChild(wrap);
+        '<div class="role">' + roleLabel + '</div>' +
+        '<div class="bubble">' + escapeHtml(content) + '</div>' +
+        '<div class="msg-meta">' + timeText + (role === 'assistant' ? ' · Read' : '') + '</div>';
+      chatMessages.appendChild(wrap);
       chatArea.scrollTop = chatArea.scrollHeight;
       return wrap;
     }
@@ -413,6 +1544,7 @@
     async function sendMessage() {
       const raw = (inputText.value || '').trim();
       if (!raw) return;
+      switchTab('chat');
       birth = loadBirth();
       if (!birth || !birth.birth_date || !birth.gender) {
         inputHint.style.display = 'block';
@@ -435,7 +1567,8 @@
             gender: birth.gender,
             birth_time: birth.birth_time || null,
             message: raw,
-            history: history.slice(-10)
+            history: history.slice(-6),
+            api_key: (apiKeyInput.value || loadApiKey() || '').trim() || null
           })
         });
         const data = await res.json();
@@ -444,6 +1577,11 @@
         if (temp) {
           temp.id = '';
           temp.querySelector('.bubble').textContent = reply;
+          const meta = temp.querySelector('.msg-meta');
+          if (meta) {
+            const now = new Date();
+            meta.textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ' · Read';
+          }
         }
         messages.push({ role: 'assistant', content: reply });
       } catch (e) {
@@ -455,14 +1593,215 @@
       chatArea.scrollTop = chatArea.scrollHeight;
     }
 
-    btnSettings.addEventListener('click', openSettings);
+    function genderText(value) {
+      return value === 'female' ? '女' : '男';
+    }
+
+    function splitGanZhi(value) {
+      if (!value) return ['--', '--'];
+      return [value.charAt(0) || '--', value.charAt(1) || '--'];
+    }
+
+    function ganzhiColor(ch) {
+      const colorMap = {
+        '甲': '#38a169', '乙': '#38a169', '寅': '#38a169', '卯': '#38a169',
+        '丙': '#ef4444', '丁': '#ef4444', '巳': '#ef4444', '午': '#ef4444',
+        '戊': '#a67c52', '己': '#a67c52', '辰': '#a67c52', '戌': '#a67c52', '丑': '#a67c52', '未': '#a67c52',
+        '庚': '#f59e0b', '辛': '#f59e0b', '申': '#f59e0b', '酉': '#f59e0b',
+        '壬': '#3b82f6', '癸': '#3b82f6', '子': '#3b82f6', '亥': '#3b82f6'
+      };
+      return colorMap[ch] || '#f1d690';
+    }
+
+    function renderFateColumn(col) {
+      const stemColor = ganzhiColor(col.stem);
+      const branchColor = ganzhiColor(col.branch);
+      return '<div class="fate-col' + (col.current ? ' current' : '') + '">' +
+        '<div class="fate-cell">' +
+          '<div class="fate-col-title">' + escapeHtml(col.title) + '</div>' +
+          '<div class="fate-col-meta">' + escapeHtml(col.meta || '--') + '</div>' +
+        '</div>' +
+        '<div class="fate-cell">' +
+          '<div class="fate-char" style="color:' + stemColor + ';">' + escapeHtml(col.stem) + '</div>' +
+          '<div class="fate-char-desc">天干</div>' +
+        '</div>' +
+        '<div class="fate-cell">' +
+          '<div class="fate-char" style="color:' + branchColor + ';">' + escapeHtml(col.branch) + '</div>' +
+          '<div class="fate-char-desc">地支</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    function renderPaipanCard() {
+      if (!birth || !paipanResult || !paipanResult.sizhu) {
+        insightBody.innerHTML = '<div class="insight-empty">保存生辰信息后，这里会显示你的四柱、当前大运和流年。</div>';
+        return;
+      }
+      const sizhu = paipanResult.sizhu || {};
+      const timeLabel = birth.birth_time ? birth.birth_time : '默认午时';
+      const currentDayun = (paipanResult.current_dayun && paipanResult.current_dayun.ganzhi)
+        ? (paipanResult.current_dayun.ganzhi + ' ' + (paipanResult.current_dayun.ageRange || ''))
+        : '--';
+      const dayunList = Array.isArray(paipanResult.dayun) ? paipanResult.dayun : [];
+      const xiyong = Array.isArray(paipanResult.xiyong) && paipanResult.xiyong.length ? paipanResult.xiyong : ['--'];
+      const jishen = Array.isArray(paipanResult.jishen) && paipanResult.jishen.length ? paipanResult.jishen : ['--'];
+      const yearGz = splitGanZhi(sizhu.year);
+      const monthGz = splitGanZhi(sizhu.month);
+      const dayGz = splitGanZhi(sizhu.day);
+      const timeGz = splitGanZhi(sizhu.time);
+      const dayunGz = splitGanZhi((paipanResult.current_dayun && paipanResult.current_dayun.ganzhi) || '--');
+      const liunianGz = splitGanZhi(paipanResult.current_liunian || '--');
+      const shishenGan = Array.isArray(sizhu.shishen_gan) ? sizhu.shishen_gan : [];
+      const matrixColumns = [
+        { title: '年柱', meta: shishenGan[0] || '祖上', stem: yearGz[0], branch: yearGz[1] },
+        { title: '月柱', meta: shishenGan[1] || '父母', stem: monthGz[0], branch: monthGz[1] },
+        { title: '日柱', meta: shishenGan[2] || '自身', stem: dayGz[0], branch: dayGz[1] },
+        { title: '时柱', meta: shishenGan[3] || '后运', stem: timeGz[0], branch: timeGz[1] },
+        { title: '大运', meta: (paipanResult.current_dayun && paipanResult.current_dayun.ageRange) || '当前', stem: dayunGz[0], branch: dayunGz[1], current: true },
+        { title: '流年', meta: (paipanResult.current_age ? ('当前 ' + paipanResult.current_age + ' 岁') : '本年'), stem: liunianGz[0], branch: liunianGz[1] }
+      ];
+      insightBody.innerHTML =
+        '<div class="birth-summary">' +
+          '<span class="summary-chip">出生：' + escapeHtml(birth.birth_date) + '</span>' +
+          '<span class="summary-chip">性别：' + genderText(birth.gender) + '</span>' +
+          '<span class="summary-chip">时辰：' + escapeHtml(timeLabel) + '</span>' +
+          '<span class="summary-chip">农历：' + escapeHtml(paipanResult.lunar_birth || '--') + '</span>' +
+        '</div>' +
+        '<div class="fate-matrix">' +
+          '<div class="fate-side">' +
+            '<div class="fate-side-item">主位</div>' +
+            '<div class="fate-side-item">天干</div>' +
+            '<div class="fate-side-item">地支</div>' +
+          '</div>' +
+          '<div class="fate-columns">' +
+            matrixColumns.map(renderFateColumn).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="insight-extra">' +
+          '<div class="extra-item"><div class="extra-label">喜用神</div><div class="element-list">' +
+            xiyong.map(function(item) { return '<span class="element-chip">' + escapeHtml(item) + '</span>'; }).join('') +
+          '</div></div>' +
+          '<div class="extra-item"><div class="extra-label">忌神</div><div class="element-list">' +
+            jishen.map(function(item) { return '<span class="element-chip">' + escapeHtml(item) + '</span>'; }).join('') +
+          '</div></div>' +
+        '</div>' +
+        (dayunList.length ? (
+          '<div class="dayun-section">' +
+            '<div class="dayun-section-head">' +
+              '<div class="dayun-section-title">大运排布</div>' +
+              '<div class="dayun-section-current">当前：' + escapeHtml(currentDayun) + '</div>' +
+            '</div>' +
+            '<div class="dayun-strip">' +
+              dayunList.map(function(item) {
+                return '<div class="dayun-item' + (item.current ? ' current' : '') + '">' +
+                  '<div class="dayun-gz">' + escapeHtml(item.ganzhi || '--') + '</div>' +
+                  '<div class="dayun-age">' + escapeHtml((item.startAge || '--') + '-' + (item.endAge || '--') + '岁') + '</div>' +
+                '</div>';
+              }).join('') +
+            '</div>' +
+          '</div>'
+        ) : '<div class="insight-empty">当前未获取到大运数据。</div>');
+    }
+
+    function renderAdviceCard() {
+      if (!birth || !paipanResult) {
+        adviceBody.innerHTML = '<div class="insight-empty">保存生辰信息后，这里会生成你的佩戴建议和工作及城市建议。</div>';
+        return;
+      }
+      adviceBody.innerHTML =
+        '<section class="advice-card">' +
+          '<div class="advice-card-head">运势总述</div>' +
+          '<div class="advice-card-body">' + escapeHtml(paipanResult.summary || '暂未生成') + '</div>' +
+        '</section>' +
+        '<section class="advice-card">' +
+          '<div class="advice-card-head">工作及城市建议</div>' +
+          '<div class="advice-card-body">' + escapeHtml(paipanResult.career || '暂未生成') + '</div>' +
+        '</section>' +
+        '<section class="advice-card">' +
+          '<div class="advice-card-head">佩戴建议（五行水晶）</div>' +
+          '<div class="advice-card-body">' + escapeHtml(paipanResult.love || '暂未生成') + '</div>' +
+        '</section>';
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      tabPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === 'panel-' + tab);
+      });
+      inputArea.style.display = tab === 'chat' ? 'block' : 'none';
+    }
+
+    async function fetchPaipan() {
+      birth = loadBirth();
+      if (!birth || !birth.birth_date || !birth.gender) {
+        paipanResult = null;
+        renderPaipanCard();
+        renderAdviceCard();
+        return;
+      }
+      insightBody.innerHTML = '<div class="insight-empty">正在生成你的四柱命盘…</div>';
+      adviceBody.innerHTML = '<div class="insight-empty">正在生成你的专属建议…</div>';
+      try {
+        const res = await fetch(API_BASE + '/api/paipan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            birth_date: birth.birth_date,
+            gender: birth.gender,
+            birth_time: birth.birth_time || null
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || '排盘失败');
+        }
+        paipanResult = data;
+        renderPaipanCard();
+        renderAdviceCard();
+      } catch (e) {
+        paipanResult = null;
+        insightBody.innerHTML = '<div class="insight-empty">命盘暂时加载失败，请确认服务已启动后再试。</div>';
+        adviceBody.innerHTML = '<div class="insight-empty">建议暂时加载失败，请确认服务已启动后再试。</div>';
+      }
+    }
+
+    btnBirthProfile.addEventListener('click', openSettings);
     btnModalCancel.addEventListener('click', closeSettings);
     btnModalSave.addEventListener('click', onSaveSettings);
+    genderCards.forEach(card => {
+      card.addEventListener('change', syncGenderSelect);
+    });
     modalMask.addEventListener('click', function(e) {
       if (e.target === modalMask) closeSettings();
     });
     birthYear.addEventListener('change', fillDays);
     birthMonth.addEventListener('change', fillDays);
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        switchTab(btn.dataset.tab);
+      });
+    });
+    quickPrompts.forEach(btn => {
+      btn.addEventListener('click', function() {
+        inputText.value = btn.dataset.prompt || '';
+        inputText.dispatchEvent(new Event('input'));
+        switchTab('chat');
+        inputText.focus();
+      });
+    });
+    btnSaveApiKey.addEventListener('click', saveApiKey);
+    btnApiKeyModal.addEventListener('click', openApiKeyModal);
+    btnApiKeyClose.addEventListener('click', closeApiKeyModal);
+    btnApiKeyConfirm.addEventListener('click', function() {
+      saveApiKey();
+      closeApiKeyModal();
+    });
+    apiKeyMask.addEventListener('click', function(e) {
+      if (e.target === apiKeyMask) closeApiKeyModal();
+    });
 
     btnSend.addEventListener('click', sendMessage);
     inputText.addEventListener('keydown', function(e) {
@@ -471,9 +1810,21 @@
         sendMessage();
       }
     });
+    inputText.addEventListener('input', function() {
+      inputText.style.height = 'auto';
+      inputText.style.height = Math.min(inputText.scrollHeight, 180) + 'px';
+    });
 
     loadBirth();
     updateInputState();
+    syncGenderCards();
+    apiKeyInput.value = loadApiKey();
+    if (apiKeyInput.value) {
+      apiKeyHint.textContent = '已读取当前浏览器里保存的 API Key，可直接开始问答。';
+    }
+    updateApiKeyTrigger();
+    fetchPaipan();
+    switchTab(activeTab);
   </script>
 </body>
 </html>
